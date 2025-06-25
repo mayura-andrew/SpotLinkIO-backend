@@ -98,11 +98,11 @@ type UserModal struct {
 }
 
 func (m UserModal) Insert(user *User) error {
-	query := `INSERT INTO users (user_name, email, first_name, last_name, mobile_number, avatar_url, password_hash, user_role, activated, has_completed_onboarding) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+	query := `INSERT INTO users (user_name, email, first_name, last_name, mobile_number, avatar_url, password_hash, user_role, authtype, activated, has_completed_onboarding) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
 			RETURNING id, created_at, version`
 
-	args := []any{user.UserName, user.Email, user.FirstName, user.LastName, user.MobileNumber, user.AvatarURL, user.Password.hash, user.Role, user.Activated, user.HasCompletedOnboarding}
+	args := []any{user.UserName, user.Email, user.FirstName, user.LastName, user.MobileNumber, user.AvatarURL, user.Password.hash, user.Role, user.AuthType, user.Activated, user.HasCompletedOnboarding}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -120,7 +120,7 @@ func (m UserModal) Insert(user *User) error {
 }
 
 func (m UserModal) GetByEmail(email string) (*User, error) {
-	query := `SELECT id, created_at, user_name, email, first_name, last_name, mobile_number, avatar_url, password_hash, user_role, activated, has_completed_onboarding, version
+	query := `SELECT id, created_at, user_name, email, first_name, last_name, mobile_number, avatar_url, password_hash, user_role, authtype, activated, has_completed_onboarding, version
       		  FROM users
       		  WHERE email = $1`
 
@@ -140,6 +140,7 @@ func (m UserModal) GetByEmail(email string) (*User, error) {
 		&user.AvatarURL,
 		&user.Password.hash,
 		&user.Role,
+		&user.AuthType,
 		&user.Activated,
 		&user.HasCompletedOnboarding,
 		&user.Version)
@@ -191,7 +192,7 @@ func (m UserModal) Update(user *User) error {
 func (m UserModal) GetForToken(tokenScope, tokenPlainText string) (*User, error) {
 	tokenHash := sha256.Sum256([]byte(tokenPlainText))
 
-	query := `SELECT users.id, users.created_at, users.user_name, users.email, users.password_hash, users.user_type, users.activated, users.has_completed_onboarding, users.version
+	query := `SELECT users.id, users.created_at, users.user_name, users.email, users.password_hash, users.user_role, users.authtype, users.activated, users.has_completed_onboarding, users.version
 	FROM users
 	INNER JOIN tokens
 	ON users.id = tokens.user_id
@@ -214,6 +215,7 @@ func (m UserModal) GetForToken(tokenScope, tokenPlainText string) (*User, error)
 		&user.Email,
 		&user.Password.hash,
 		&user.Role,
+		&user.AuthType,
 		&user.Activated,
 		&user.HasCompletedOnboarding,
 		&user.Version,
@@ -274,4 +276,96 @@ func (m UserModal) FindOrCreateFromGoogle(googleUser *GoogleUser) (*User, error)
 	}
 
 	return nil, err
+}
+
+
+func (m UserModal) Get(id uuid.UUID) (*User, error) {
+    query := `SELECT id, created_at, updated_at, user_name, email, first_name, last_name, mobile_number, avatar_url, user_role, authtype, activated, has_completed_onboarding, version
+                FROM users
+                WHERE id = $1`
+
+    var user User
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    err := m.DB.QueryRowContext(ctx, query, id).Scan(
+        &user.ID,
+        &user.CreatedAt,
+        &user.UpdatedAt,
+        &user.UserName,
+        &user.Email,
+        &user.FirstName,
+        &user.LastName,
+        &user.MobileNumber,
+        &user.AvatarURL,
+        &user.Role,
+        &user.AuthType,
+        &user.Activated,
+        &user.HasCompletedOnboarding,
+        &user.Version)
+
+    if err != nil {
+        switch {
+        case errors.Is(err, sql.ErrNoRows):
+            return nil, ErrRecordNotFound
+        default:
+            return nil, err
+        }
+    }
+    return &user, nil
+}
+
+// Update profile information
+func (m UserModal) UpdateProfile(user *User) error {
+    query := `UPDATE users
+            SET first_name = $1, last_name = $2, mobile_number = $3, avatar_url = $4, has_completed_onboarding = $5, updated_at = CURRENT_TIMESTAMP, version = version + 1
+            WHERE id = $6 AND version = $7
+            RETURNING version`
+
+    args := []any{
+        user.FirstName,
+        user.LastName,
+        user.MobileNumber,
+        user.AvatarURL,
+        user.HasCompletedOnboarding,
+        user.ID,
+        user.Version,
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
+    if err != nil {
+        switch {
+        case errors.Is(err, sql.ErrNoRows):
+            return ErrEditConflict
+        default:
+            return err
+        }
+    }
+    return nil
+}
+
+func ValidateProfile(v *validator.Validator, user *User) {
+    v.Check(user.FirstName != nil && *user.FirstName != "", "first_name", "must be provided")
+    v.Check(user.LastName != nil && *user.LastName != "", "last_name", "must be provided")
+    
+    if user.FirstName != nil {
+        v.Check(len(*user.FirstName) <= 255, "first_name", "must not be more than 255 characters long")
+    }
+    
+    if user.LastName != nil {
+        v.Check(len(*user.LastName) <= 255, "last_name", "must not be more than 255 characters long")
+    }
+    
+    if user.MobileNumber != nil && *user.MobileNumber != "" {
+        v.Check(len(*user.MobileNumber) <= 20, "mobile_number", "must not be more than 20 characters long")
+        v.Check(validator.Matches(*user.MobileNumber, validator.PhoneRX), "mobile_number", "must be a valid phone number")
+    }
+    
+    if user.AvatarURL != nil && *user.AvatarURL != "" {
+        v.Check(len(*user.AvatarURL) <= 255, "avatar_url", "must not be more than 255 characters long")
+    }
 }

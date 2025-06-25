@@ -28,9 +28,9 @@ func New(host string, port int, username, password, sender string) Mailer {
 func (m Mailer) Send(recipient, templateType string, data any) error {
 	var tempFile string
 	if templateType == "user_welcome" {
-		tempFile = "./internal/mailer/templates/user_welcome.tmpl"
+		tempFile = "/home/andrew/dev/SpotLinkIO/backend/internal/mailer/templates/user_welcome.tmpl"
 	} else if templateType == "password_reset" {
-		tempFile = "./internal/mailer/templates/token_password_reset.tmpl"
+		tempFile = "/home/andrew/dev/SpotLinkIO/backend/internal/mailer/templates/token_password_reset.tmpl"
 	}
 	tmpl, err := template.ParseFiles(tempFile)
 	if err != nil {

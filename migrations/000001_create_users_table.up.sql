@@ -8,7 +8,7 @@ CREATE TABLE users (
     mobile_number VARCHAR(20),
     avatar_url VARCHAR(255),
     role VARCHAR(50) NOT NULL,
-    authtype VARCHAR(50),
+    authtype TEXT NOT NULL DEFAULT 'normal',
     has_completed_onboarding BOOLEAN DEFAULT FALSE,
     activated BOOLEAN DEFAULT FALSE,
     version INT DEFAULT 1,

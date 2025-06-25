@@ -15,6 +15,7 @@ type Models struct {
 	Users           UserModal
 	Tokens          TokenModel
 	Vehicles        VehicleModel
+	QRCodes         QRCodeModel
 	ParkingLots     ParkingLotModel
 	ParkingSpots    ParkingSpotModel
 	Reservations    ReservationModel
@@ -26,10 +27,11 @@ type Models struct {
 
 func NewModels(db *sql.DB) Models {
 	return Models{
-		Permissions:     PermissionModel{DB: db},
-		Users:           UserModal{DB: db},
-		Tokens:          TokenModel{DB: db},
-		Vehicles:        VehicleModel{DB: db},
+		Permissions: PermissionModel{DB: db},
+		Users:       UserModal{DB: db},
+		Tokens:      TokenModel{DB: db},
+		Vehicles:    VehicleModel{DB: db},
+		QRCodes:     QRCodeModel{DB: db},
 		ParkingLots:     ParkingLotModel{DB: db},
 		ParkingSpots:    ParkingSpotModel{DB: db},
 		Reservations:    ReservationModel{DB: db},

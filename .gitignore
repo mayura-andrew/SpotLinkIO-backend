@@ -4,3 +4,7 @@ cmd/api/.env
 cmd/api/.env
 *.env
 .env
+# Environment files
+.env
+*.env
+cmd/api/.env

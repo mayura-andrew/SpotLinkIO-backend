@@ -47,7 +47,9 @@ type config struct {
 		redirectURI        string
 	}
 	frontendURL string
-
+	qr          struct {
+		storageDir string
+	}
 	cors struct {
 		trustedOrigins []string
 	}
@@ -110,7 +112,8 @@ func main() {
 	})
 
 	cfg.cors.trustedOrigins = append(cfg.cors.trustedOrigins, "http://localhost:5173", "http://localhost:3000")
-	
+
+	cfg.qr.storageDir = "./qr_images"
 	flag.Parse()
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)

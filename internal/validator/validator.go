@@ -9,6 +9,8 @@ import (
 
 var (
 	EmailRx = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	PhoneRX = regexp.MustCompile(`^\+?[\d\s\-\(\)]{10,20}$`)
+
 )
 
 type Validator struct {

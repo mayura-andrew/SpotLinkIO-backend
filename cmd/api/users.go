@@ -32,10 +32,11 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	user := &data.User{
-		UserName:  input.UserName,
-		Email:     input.Email,
-		Role:  "normal",
-		Activated: false,
+		UserName:               input.UserName,
+		Email:                  input.Email,
+		Role:                   "normal",
+		AuthType:               "normal",
+		Activated:              false,
 		HasCompletedOnboarding: false,
 	}
 
@@ -208,7 +209,7 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 		}
 		return
 	}
-	
+
 	err = app.models.Tokens.DeleteAllForUser(data.ScopePasswordReset, user.ID)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -221,4 +222,133 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) completeProfileHandler(w http.ResponseWriter, r *http.Request) {
+    var input struct {
+        FirstName    string  `json:"first_name"`
+        LastName     string  `json:"last_name"`
+        MobileNumber *string `json:"mobile_number"`
+        AvatarURL    *string `json:"avatar_url"`
+    }
+
+    err := app.readJSON(w, r, &input)
+    if err != nil {
+        app.badRequestResponse(w, r, err)
+        return
+    }
+
+    // Get the authenticated user from context
+    user := app.contextGetUser(r)
+
+    // Check if user is activated
+    if !user.Activated {
+        app.errorResponse(w, r, http.StatusForbidden, "user account must be activated first")
+        return
+    }
+
+    // Check if profile is already completed
+    if user.HasCompletedOnboarding {
+        app.errorResponse(w, r, http.StatusBadRequest, "profile has already been completed")
+        return
+    }
+
+    // Update user profile fields
+    user.FirstName = &input.FirstName
+    user.LastName = &input.LastName
+    user.MobileNumber = input.MobileNumber
+    user.AvatarURL = input.AvatarURL
+    user.HasCompletedOnboarding = true
+
+    // Validate the profile data
+    v := validator.New()
+    if data.ValidateProfile(v, user); !v.Valid() {
+        app.failedValidationResponse(w, r, v.Errors)
+        return
+    }
+
+    // Update the user in the database
+    err = app.models.Users.UpdateProfile(user)
+    if err != nil {
+        switch {
+        case errors.Is(err, data.ErrEditConflict):
+            app.editConflictResponse(w, r)
+        default:
+            app.serverErrorResponse(w, r, err)
+        }
+        return
+    }
+
+    // Return the updated user
+    err = app.writeJSON(w, http.StatusOK, envelope{
+        "user":    user,
+        "message": "profile completed successfully",
+    }, nil)
+    if err != nil {
+        app.serverErrorResponse(w, r, err)
+    }
+}
+
+func (app *application) getUserProfileHandler(w http.ResponseWriter, r *http.Request) {
+    user := app.contextGetUser(r)
+
+    err := app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+    if err != nil {
+        app.serverErrorResponse(w, r, err)
+    }
+}
+
+func (app *application) updateUserProfileHandler(w http.ResponseWriter, r *http.Request) {
+    var input struct {
+        FirstName    *string `json:"first_name"`
+        LastName     *string `json:"last_name"`
+        MobileNumber *string `json:"mobile_number"`
+        AvatarURL    *string `json:"avatar_url"`
+    }
+
+    err := app.readJSON(w, r, &input)
+    if err != nil {
+        app.badRequestResponse(w, r, err)
+        return
+    }
+
+    user := app.contextGetUser(r)
+
+    // Update only provided fields
+    if input.FirstName != nil {
+        user.FirstName = input.FirstName
+    }
+    if input.LastName != nil {
+        user.LastName = input.LastName
+    }
+    if input.MobileNumber != nil {
+        user.MobileNumber = input.MobileNumber
+    }
+    if input.AvatarURL != nil {
+        user.AvatarURL = input.AvatarURL
+    }
+
+    // Validate the profile data
+    v := validator.New()
+    if data.ValidateProfile(v, user); !v.Valid() {
+        app.failedValidationResponse(w, r, v.Errors)
+        return
+    }
+
+    // Update the user in the database
+    err = app.models.Users.UpdateProfile(user)
+    if err != nil {
+        switch {
+        case errors.Is(err, data.ErrEditConflict):
+            app.editConflictResponse(w, r)
+        default:
+            app.serverErrorResponse(w, r, err)
+        }
+        return
+    }
+
+    err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+    if err != nil {
+        app.serverErrorResponse(w, r, err)
+    }
 }

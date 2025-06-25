@@ -1,18 +1,28 @@
-{{define "subject"}}Welcome to OpenConnect!{{end}}
+{{define "subject"}}Welcome to SpotLinkIO!{{end}}
 
 {{define "plainBody"}}
-Hi,
+Hi {{.userName}},
 
-Thanks for signing up for OpenConnect. We're excited to have you on board!
+Welcome to SpotLinkIO - Your Smart Parking Solution!
 
-To activate your account, please click the following link:
+We're excited to have you join our community of smart parkers. With SpotLinkIO, you can easily find, reserve, and pay for parking spots in your area.
+
+To activate your account and start parking smarter, please click the following link:
 {{.frontendURL}}/auth/activate?token={{.activationToken}}
-
 
 This activation link will expire in 3 days.
 
-Thanks,
-The OpenConnect Team
+Once activated, you can:
+• Find nearby parking spots in real-time
+• Reserve parking spaces in advance
+• Make secure payments through the app
+• Track your parking history
+• Get notifications about your reservations
+
+Thanks for choosing SpotLinkIO!
+
+Best regards,
+The SpotLinkIO Team
 {{end}}
 
 {{define "htmlBody"}}
@@ -22,38 +32,129 @@ The OpenConnect Team
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px 20px;
+        }
         .button {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             color: white;
-            padding: 15px 32px;
+            padding: 15px 30px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 16px;
-            margin: 4px 2px;
+            font-weight: bold;
+            margin: 20px 0;
             cursor: pointer;
+            border-radius: 25px;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .features {
+            background-color: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .feature-item:before {
+            content: "🅿️";
+            position: absolute;
+            left: 0;
+        }
+        .footer {
+            background-color: #f1f5f9;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 8px 8px;
+            color: #64748b;
+        }
+        .link-fallback {
+            word-break: break-all;
+            background-color: #f1f5f9;
+            padding: 10px;
             border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
         }
     </style>
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; padding: 20px;">
-    <h2>Welcome to OpenConnect!</h2>
-    <p>Hi,</p>
-    <p>Thanks for signing up for OpenConnect. We're excited to have you on board!</p>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f1f5f9;">
+    <div class="container">
+        <div class="header">
+            <div class="logo">SpotLinkIO</div>
+            <div class="tagline">Your Smart Parking Solution</div>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #1e293b; margin-top: 0;">Welcome {{.userName}}!</h2>
+            
+            <p>We're thrilled to have you join our community of smart parkers! SpotLinkIO makes finding and reserving parking spots easier than ever.</p>
 
-    <div style="text-align: center; margin: 30px 0;">
-        <a href="{{.frontendURL}}/auth/activate?token={{.activationToken}}" class="button" style="background-color: #4CAF50; color: white; padding: 15px 32px; text-decoration: none; border-radius: 4px;">
-            Activate Your Account
-        </a>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{.frontendURL}}/auth/activate?token={{.activationToken}}" class="button">
+                    🚗 Activate Your Account
+                </a>
+            </div>
+
+            <div class="features">
+                <h3 style="color: #1e293b; margin-top: 0;">What you can do with SpotLinkIO:</h3>
+                <div class="feature-item">Find nearby parking spots in real-time</div>
+                <div class="feature-item">Reserve parking spaces in advance</div>
+                <div class="feature-item">Make secure payments through the app</div>
+                <div class="feature-item">Track your parking history and expenses</div>
+                <div class="feature-item">Get notifications about your reservations</div>
+                <div class="feature-item">Rate and review parking locations</div>
+            </div>
+
+            <p><strong>Having trouble with the button?</strong> Copy and paste this link in your browser:</p>
+            <div class="link-fallback">
+                {{.frontendURL}}/auth/activate?token={{.activationToken}}
+            </div>
+
+            <p style="color: #ef4444; font-weight: bold;">⏰ This activation link will expire in 3 days.</p>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0;">
+                Thanks for choosing SpotLinkIO!<br>
+                <strong>The SpotLinkIO Team</strong>
+            </p>
+            <p style="margin: 10px 0 0 0; font-size: 12px;">
+                Need help? Contact us at support@spotlinkio.com
+            </p>
+        </div>
     </div>
-
-    <p>If the button doesn't work, copy and paste this link in your browser:</p>
-    <p>{{.frontendURL}}/auth/activate?token={{.activationToken}}</p>
-
-    <p><small>This activation link will expire in 3 days.</small></p>
-
-    <p>Thanks,<br>The OpenConnect Team</p>
 </body>
 </html>
 {{end}}
